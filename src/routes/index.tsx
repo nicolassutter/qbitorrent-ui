@@ -90,6 +90,13 @@ export default function HomeComponent() {
     return Math.max(count, 1);
   }, [filteredTorrents, perPage]);
 
+  // If the page is greater than the page count, set the page to the last page
+  useEffect(() => {
+    if (page() > pageCount) {
+      setPage(pageCount);
+    }
+  }, [pageCount, page()]);
+
   const id = useId();
 
   return (
