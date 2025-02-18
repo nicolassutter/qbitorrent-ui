@@ -20,6 +20,7 @@
     "@tanstack/router-plugin": "^1.105.0",
     "@types/bytes": "^3.1.5",
     "@types/http-proxy": "^1.17.15",
+    "@types/path-browserify": "^1.0.3",
     "@types/react": "^19.0.8",
     "@types/react-dom": "^19.0.3",
     "@vitejs/plugin-react": "^4.3.2",
@@ -32,6 +33,7 @@
     "vite": "^6.0.3"
   },
   "dependencies": {
+    "@ark-ui/react": "^4.9.1",
     "@hey-api/client-fetch": "^0.8.0",
     "@hookform/resolvers": "^4.1.0",
     "@preact/signals-react": "^3.0.1",
@@ -59,6 +61,7 @@
     "http-proxy": "^1.18.1",
     "http-proxy-middleware": "^3.0.3",
     "lucide-react": "^0.475.0",
+    "path-browserify": "^1.0.1",
     "prettier": "^3.4.2",
     "rc-pagination": "^5.1.0",
     "react": "^19.0.0",

@@ -8,30 +8,21 @@ import {
   HardDrive,
   Users,
   Zap,
-  Link,
+  LucideLink,
   Hash,
   Tag,
   Calendar,
-  File,
-  CheckCircle,
-  AlertCircle,
-  BarChart2,
+  ChevronLeft,
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { queryOptions, useQuery } from "@tanstack/react-query";
 import bytes from "bytes";
+import { TorrentFilesTree } from "@/components/TorrentFilesTree";
+import { ComponentProps, useMemo } from "react";
 
 const formatDate = (timestamp: number) => {
   return new Date(timestamp * 1000).toLocaleString();
@@ -51,12 +42,6 @@ const formatDuration = (seconds: number) => {
   const hours = Math.floor(seconds / 3600);
   const minutes = Math.floor((seconds % 3600) / 60);
   return `${hours}h ${minutes}m`;
-};
-const priorityLabels: Record<number, string> = {
-  0: "Don't Download",
-  1: "Normal",
-  6: "High",
-  7: "Maximum",
 };
 
 export const Route = createFileRoute("/torrent/$torrentHash")({
@@ -84,7 +69,7 @@ export default function Torrent() {
   });
 
   const files = useQuery({
-    queryKey: ["files", torrentHash()],
+    queryKey: ["files", torrentHash],
     queryFn: async () => {
       const response = await torrentsFilesPost({
         body: {
@@ -98,18 +83,40 @@ export default function Torrent() {
 
   const torrent = useQuery(torrentOptions);
 
+  const treeFiles = useMemo(() => {
+    return (
+      files.data?.map(
+        (file): ComponentProps<typeof TorrentFilesTree>["files"][number] => {
+          return {
+            path: file.name ?? "",
+            fileInfo: {
+              status: file.is_seed
+                ? "seeding"
+                : file.progress === 1
+                  ? "seeding"
+                  : "downloading",
+              progress: (file.progress ?? 0) * 100,
+              size: file.size ?? 0,
+            },
+          };
+        },
+      ) ?? []
+    );
+  }, [files.data]);
+
   return (
     <main className="">
       <div className="container mx-auto p-4">
         <h1 className="text-2xl font-bold mb-4 flex items-center gap-2">
           Torrent Information
           <a href={torrent.data?.magnet_uri} className="break-all">
-            <Link className="inline mr-2 text-base" />
+            <LucideLink className="inline mr-2 text-base" />
           </a>
         </h1>
 
         <Button asChild variant="link">
           <Link to="/" className="mb-4">
+            <ChevronLeft aria-hidden="true"></ChevronLeft>
             Back
           </Link>
         </Button>
@@ -277,68 +284,15 @@ export default function Torrent() {
               <CardHeader>
                 <CardTitle>Torrent Files</CardTitle>
               </CardHeader>
+
               <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Size</TableHead>
-                      <TableHead>Progress</TableHead>
-                      <TableHead>Priority</TableHead>
-                      <TableHead>Status</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  {/* TODO: virtualize list or add pagination */}
-                  <TableBody>
-                    {files.data?.map((file) => (
-                      <TableRow>
-                        <TableCell className="font-medium">
-                          <div className="flex items-center">
-                            <File className="mr-2" />
-                            {file.name}
-                          </div>
-                        </TableCell>
-                        <TableCell>{formatSize(file.size ?? 0)}</TableCell>
-                        <TableCell>
-                          <div className="w-full max-w-xs">
-                            <Progress
-                              value={(file.progress ?? 0) * 100}
-                              className="w-full"
-                            />
-                            <span className="text-xs text-muted-foreground">
-                              {((file.progress ?? 0) * 100).toFixed(2)}%
-                            </span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="outline">
-                            {file.priority
-                              ? priorityLabels[file.priority]
-                              : "Unknown"}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          {file.is_seed ? (
-                            <div className="flex items-center text-green-500">
-                              <CheckCircle className="mr-1 text-base" />
-                              Seeding
-                            </div>
-                          ) : file.progress === 1 ? (
-                            <div className="flex items-center text-blue-500">
-                              <BarChart2 className="mr-1 text-base" />
-                              Completed
-                            </div>
-                          ) : (
-                            <div className="flex items-center text-yellow-500">
-                              <AlertCircle className="mr-1 text-base" />
-                              Downloading
-                            </div>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                {files.isPending && <p>Loading...</p>}
+                {!files.isPending && !files.data?.length && (
+                  <p>No files found</p>
+                )}
+                {!files.isPending && files.data?.length && (
+                  <TorrentFilesTree files={treeFiles}></TorrentFilesTree>
+                )}{" "}
               </CardContent>
             </Card>
           </div>
