@@ -3,7 +3,7 @@ import { ChevronDown, ChevronRight, FileIcon, FolderIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { memo, type FunctionComponent } from "react";
+import { memo } from "react";
 import { sep, join } from "path-browserify";
 import bytes from "bytes";
 
@@ -74,9 +74,11 @@ const formatSize = (b: number) => {
   });
 };
 
-export const TorrentFilesTree: FunctionComponent<{
+export const TorrentFilesTree = memo(function TorrentFilesTree({
+  files,
+}: {
   files: Array<{ path: string; fileInfo: FileInfo }>;
-}> = memo(({ files }) => {
+}) {
   const rootNode = buildTree(files);
 
   const collection = createTreeCollection<Node>({

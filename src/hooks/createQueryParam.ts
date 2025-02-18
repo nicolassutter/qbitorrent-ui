@@ -32,7 +32,7 @@ export function createQueryParam<
 
   const set = (value: Primitive) => {
     navigate({
-      search: (prev) => ({ [key]: value }),
+      search: () => ({ [key]: value }),
     });
   };
 

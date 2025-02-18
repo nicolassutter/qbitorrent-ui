@@ -93,7 +93,7 @@ export const Sidebar = () => {
 
       {/*footer*/}
       <div className="mt-auto">
-        <ThemeDropdown placement="top-start" />
+        <ThemeDropdown />
       </div>
     </div>
   );

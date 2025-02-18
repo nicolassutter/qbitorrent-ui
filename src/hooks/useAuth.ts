@@ -18,7 +18,7 @@ const checkAuthOptions = queryOptions({
     try {
       await appVersionGet();
       return true;
-    } catch (error) {
+    } catch (_error) {
       return false;
     }
   },

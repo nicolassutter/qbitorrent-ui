@@ -132,19 +132,19 @@ export default function Torrent() {
                 {torrent.data?.added_on !== undefined && (
                   <p>
                     <Calendar className="inline mr-2" /> Added:{" "}
-                    {formatDate(torrent.data?.added_on!)}
+                    {formatDate(torrent.data.added_on)}
                   </p>
                 )}
                 {torrent.data?.completion_on !== undefined && (
                   <p>
                     <Calendar className="inline mr-2" /> Completed:{" "}
-                    {formatDate(torrent.data?.completion_on!)}
+                    {formatDate(torrent.data.completion_on)}
                   </p>
                 )}
                 {torrent.data?.last_activity !== undefined && (
                   <p>
                     <Calendar className="inline mr-2" /> Last Activity:{" "}
-                    {formatDate(torrent.data?.last_activity!)}
+                    {formatDate(torrent.data.last_activity)}
                   </p>
                 )}
                 <p>
@@ -253,7 +253,7 @@ export default function Torrent() {
                   <Clock className="inline mr-2" /> ETA:{" "}
                   {torrent.data?.eta === 8640000
                     ? "∞"
-                    : formatDuration(torrent.data?.eta!)}
+                    : formatDuration(torrent.data.eta)}
                 </p>
               )}
             </CardContent>

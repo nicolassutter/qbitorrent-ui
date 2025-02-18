@@ -6,10 +6,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { LucideSun, LucideMoon } from "lucide-react";
-import { type FunctionComponent } from "react";
 import { useTheme } from "@/hooks/useTheme";
 
-export const ThemeDropdown: FunctionComponent<{}> = (props) => {
+export const ThemeDropdown = () => {
   const { theme, setTheme } = useTheme();
 
   return (
