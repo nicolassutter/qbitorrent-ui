@@ -9,13 +9,20 @@ import tailwindcss from "@tailwindcss/vite";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
+const ReactCompilerConfig = {
+  /* ... */
+};
+
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
     TanStackRouterVite({}),
     react({
       babel: {
-        plugins: [["module:@preact/signals-react-transform"]],
+        plugins: [
+          ["module:@preact/signals-react-transform"],
+          ["babel-plugin-react-compiler", ReactCompilerConfig],
+        ],
       },
     }),
     tailwindcss(),
