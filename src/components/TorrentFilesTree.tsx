@@ -1,16 +1,26 @@
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
 import { TreeView, createTreeCollection } from "@ark-ui/react/tree-view";
 import { ChevronDown, ChevronRight, FileIcon, FolderIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { memo } from "react";
+import { createContext, memo, useContext } from "react";
 import { sep, join } from "path-browserify";
 import bytes from "bytes";
+import { TorrentsFiles as TorrentFile } from "@/client/types.gen";
 
 interface FileInfo {
   status: "downloading" | "seeding" | "paused" | "queued";
   progress: number;
   size: number;
+  priority?: TorrentFile["priority"];
+  index?: number;
 }
 
 interface Node {
@@ -19,6 +29,13 @@ interface Node {
   children?: Node[];
   fileInfo?: FileInfo;
 }
+
+export const priorityMap = {
+  0: "Do not download",
+  1: "Normal priority",
+  6: "High priority",
+  7: "Maximal priority",
+} satisfies Record<NonNullable<TorrentFile["priority"]>, string>;
 
 function buildTree(
   fileList: Array<{ path: string; fileInfo: FileInfo }>,
@@ -74,10 +91,21 @@ const formatSize = (b: number) => {
   });
 };
 
+type HandlePriorityChange = (
+  priority: keyof typeof priorityMap,
+  fileIndex: number,
+) => Promise<void> | void;
+const PriorityChangeContext = createContext<undefined | HandlePriorityChange>(
+  undefined,
+);
+const useHandlePriorityChange = () => useContext(PriorityChangeContext);
+
 export const TorrentFilesTree = memo(function TorrentFilesTree({
   files,
+  handlePriorityChange,
 }: {
   files: Array<{ path: string; fileInfo: FileInfo }>;
+  handlePriorityChange: HandlePriorityChange;
 }) {
   const rootNode = buildTree(files);
 
@@ -88,20 +116,25 @@ export const TorrentFilesTree = memo(function TorrentFilesTree({
   });
 
   return (
-    <TreeView.Root collection={collection}>
-      <TreeView.Label className="sr-only">Torrent Files Tree</TreeView.Label>
+    <PriorityChangeContext.Provider value={handlePriorityChange}>
+      <TreeView.Root collection={collection}>
+        <TreeView.Label className="sr-only">Torrent Files Tree</TreeView.Label>
 
-      <TreeView.Tree>
-        {collection.rootNode.children?.map((node, index) => (
-          <TreeNode key={node.id} node={node} indexPath={[index]} />
-        ))}
-      </TreeView.Tree>
-    </TreeView.Root>
+        <TreeView.Tree>
+          {collection.rootNode.children?.map((node, index) => (
+            <TreeNode key={node.id} node={node} indexPath={[index]} />
+          ))}
+        </TreeView.Tree>
+      </TreeView.Root>
+    </PriorityChangeContext.Provider>
   );
 });
 
 const TreeNode = (props: TreeView.NodeProviderProps<Node>) => {
   const { node, indexPath } = props;
+
+  const priority = node.fileInfo?.priority;
+  const handlePriorityChange = useHandlePriorityChange();
 
   return (
     <TreeView.NodeProvider key={node.id} node={node} indexPath={indexPath}>
@@ -109,7 +142,7 @@ const TreeNode = (props: TreeView.NodeProviderProps<Node>) => {
         <TreeView.Branch>
           <TreeView.BranchControl className="flex items-center">
             <Button variant="ghost" size="sm" asChild>
-              <TreeView.BranchText className="flex items-center gap-1 w-full text-left justify-start h-auto py-2">
+              <TreeView.BranchText className="flex items-center gap-1 w-full text-left justify-start h-auto py-2 hover:bg-secondary/40">
                 <FolderIcon />{" "}
                 <span className="break-all shrink-1 whitespace-normal">
                   {node.name}
@@ -142,13 +175,41 @@ const TreeNode = (props: TreeView.NodeProviderProps<Node>) => {
       ) : (
         <TreeView.Item>
           <Button variant="ghost" size="sm" asChild>
-            <TreeView.ItemText className="flex items-center gap-2 w-full justify-start h-auto py-2">
-              <FileIcon />
-              <span className="break-all shrink-1 whitespace-normal">
-                {node.name}
-              </span>
+            <TreeView.ItemText className="flex flex-col md:flex-row md:items-center items-stretch gap-2 w-full justify-start h-auto py-2 hover:bg-secondary/40">
+              <div className="flex items-center gap-[inherit]">
+                <FileIcon />
+                <span className="break-all shrink-1 whitespace-normal">
+                  {node.name}
+                </span>
+              </div>
+
               {node.fileInfo && (
-                <>
+                <div className="flex flex-col md:flex-row md:items-center gap-[inherit] md:ml-auto">
+                  {priority !== undefined && (
+                    // select component to change file priority
+                    <Select
+                      value={String(priority)}
+                      onValueChange={(v) => {
+                        const value = Number(v) as typeof priority;
+
+                        if (node.fileInfo?.index === undefined) return;
+
+                        handlePriorityChange?.(value, node.fileInfo.index);
+                      }}
+                    >
+                      <SelectTrigger className="w-[180px]">
+                        <SelectValue placeholder="Theme" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Object.entries(priorityMap).map(([value, label]) => (
+                          <SelectItem key={value} value={value}>
+                            {label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+
                   <Badge
                     variant={
                       node.fileInfo.status === "downloading"
@@ -157,7 +218,6 @@ const TreeNode = (props: TreeView.NodeProviderProps<Node>) => {
                           ? "outline"
                           : "secondary"
                     }
-                    className="ml-auto"
                   >
                     {node.fileInfo.status}
                   </Badge>
@@ -173,7 +233,7 @@ const TreeNode = (props: TreeView.NodeProviderProps<Node>) => {
                   <span className="text-xs text-muted-foreground whitespace-nowrap">
                     {formatSize(node.fileInfo.size)}
                   </span>
-                </>
+                </div>
               )}
             </TreeView.ItemText>
           </Button>

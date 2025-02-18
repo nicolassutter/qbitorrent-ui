@@ -1,6 +1,16 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { torrentsFilesPost, torrentsInfoPost } from "@/client/sdk.gen";
-
+import {
+  torrentsFilePrioPost,
+  torrentsFilesPost,
+  torrentsInfoPost,
+} from "@/client/sdk.gen";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
 import {
   Download,
   Upload,
@@ -19,10 +29,12 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { queryOptions, useQuery } from "@tanstack/react-query";
+import { queryOptions, useMutation, useQuery } from "@tanstack/react-query";
 import bytes from "bytes";
-import { TorrentFilesTree } from "@/components/TorrentFilesTree";
-import { ComponentProps, useMemo } from "react";
+import { priorityMap, TorrentFilesTree } from "@/components/TorrentFilesTree";
+import { ComponentProps, useEffect, useMemo } from "react";
+import { TorrentsFilePrioPostData } from "@/client";
+import { useSignal } from "@preact/signals-react";
 
 const formatDate = (timestamp: number) => {
   return new Date(timestamp * 1000).toLocaleString();
@@ -79,9 +91,12 @@ export default function Torrent() {
 
       return response.data;
     },
+    refetchInterval: 2000,
   });
 
   const torrent = useQuery(torrentOptions);
+
+  const allFilesPriority = useSignal<keyof typeof priorityMap>(0);
 
   const treeFiles = useMemo(() => {
     return (
@@ -97,12 +112,29 @@ export default function Torrent() {
                   : "downloading",
               progress: (file.progress ?? 0) * 100,
               size: file.size ?? 0,
+              priority: file.priority,
+              index: file.index,
             },
           };
         },
       ) ?? []
     );
   }, [files.data]);
+
+  const filePriorityMutation = useMutation({
+    mutationFn: async (body: TorrentsFilePrioPostData["body"]) => {
+      await torrentsFilePrioPost({
+        body: {
+          ...body,
+          // @ts-expect-error we manually transform the array to a string, Hey API doesn't do it
+          id: body.id.join("|"),
+        },
+      });
+    },
+    async onSettled() {
+      await files.refetch();
+    },
+  });
 
   return (
     <main className="">
@@ -283,6 +315,48 @@ export default function Torrent() {
             <Card>
               <CardHeader>
                 <CardTitle>Torrent Files</CardTitle>
+
+                <form
+                  className="flex items-center gap-2 mt-2"
+                  onSubmit={(e) => {
+                    e.preventDefault();
+
+                    if (allFilesPriority.value === undefined) return;
+
+                    filePriorityMutation.mutate({
+                      priority: allFilesPriority.value,
+                      hash: torrentHash,
+                      id:
+                        files.data
+                          ?.map((file) => file.index)
+                          .filter((index) => index !== undefined) ?? [],
+                    });
+                  }}
+                >
+                  <Select
+                    value={String(allFilesPriority.value)}
+                    onValueChange={(v) => {
+                      const value = Number(v) as typeof allFilesPriority.value;
+                      allFilesPriority.value = value;
+                    }}
+                  >
+                    <SelectTrigger
+                      className="w-[180px]"
+                      aria-label="set all files to selected priority"
+                    >
+                      <SelectValue placeholder="Theme" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Object.entries(priorityMap).map(([value, label]) => (
+                        <SelectItem key={value} value={value}>
+                          {label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
+                  <Button type="submit">Set all files to status</Button>
+                </form>
               </CardHeader>
 
               <CardContent>
@@ -291,8 +365,17 @@ export default function Torrent() {
                   <p>No files found</p>
                 )}
                 {!files.isPending && files.data?.length && (
-                  <TorrentFilesTree files={treeFiles}></TorrentFilesTree>
-                )}{" "}
+                  <TorrentFilesTree
+                    files={treeFiles}
+                    handlePriorityChange={(priority, fileIndex) => {
+                      filePriorityMutation.mutate({
+                        hash: torrentHash,
+                        id: [fileIndex],
+                        priority,
+                      });
+                    }}
+                  ></TorrentFilesTree>
+                )}
               </CardContent>
             </Card>
           </div>
