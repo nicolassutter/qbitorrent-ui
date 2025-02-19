@@ -1,4 +1,5 @@
 import { effect, signal } from "@preact/signals-react";
+import { useSignals } from "@preact/signals-react/runtime";
 import { z } from "zod";
 
 const ThemeSchema = z.enum(["light", "dark", "system"]);
@@ -30,10 +31,13 @@ export function initTheme() {
 }
 
 export const useTheme = () => {
+  useSignals();
+
   return {
     theme,
     setTheme(t: Theme) {
       localStorage.setItem(storageKey, t);
+      // eslint-disable-next-line react-compiler/react-compiler
       theme.value = t;
     },
   };

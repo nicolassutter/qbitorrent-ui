@@ -4,7 +4,7 @@ import { Badge } from "./ui/badge";
 import bytes from "bytes";
 import { Progress } from "./ui/progress";
 import { LucideLoaderCircle, LucideTrash } from "lucide-react";
-import { FunctionComponent, useId, type ReactNode } from "react";
+import { FunctionComponent, useId, useState, type ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
 import {
@@ -15,7 +15,6 @@ import {
 } from "@/components/ui/context-menu";
 import { Dialog, DialogContent, DialogFooter, DialogHeader } from "./ui/dialog";
 import { Button } from "./ui/button";
-import { useSignal } from "@preact/signals-react";
 import { DialogDescription, DialogTitle } from "@radix-ui/react-dialog";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { torrentsDeletePost } from "@/client";
@@ -49,7 +48,7 @@ export const TorrentDeletionDialog: FunctionComponent<{
   onClose: () => void;
   onSubmit: (deleteFiles: boolean) => void;
 }> = ({ isOpen, onClose, onSubmit }) => {
-  const deleteFiles = useSignal(false);
+  const [deleteFiles, setDeleteFiles] = useState(false);
   const id = useId();
   const checkboxId = `deleteFiles-${id}`;
 
@@ -72,9 +71,9 @@ export const TorrentDeletionDialog: FunctionComponent<{
 
         <div className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 shadow">
           <Checkbox
-            checked={deleteFiles.value}
+            checked={deleteFiles}
             onCheckedChange={(v) => {
-              if (typeof v === "boolean") deleteFiles.value = v;
+              if (typeof v === "boolean") setDeleteFiles(v);
             }}
             id={checkboxId}
           />
@@ -94,10 +93,7 @@ export const TorrentDeletionDialog: FunctionComponent<{
           <Button variant="ghost" onClick={onClose}>
             Cancel
           </Button>
-          <Button
-            variant="destructive"
-            onClick={() => onSubmit(deleteFiles.value)}
-          >
+          <Button variant="destructive" onClick={() => onSubmit(deleteFiles)}>
             Delete
           </Button>
         </DialogFooter>
@@ -111,7 +107,7 @@ export const TorrentCard: FunctionComponent<{
 }> = (props) => {
   const torrent = props.torrent;
 
-  const deletionDialogOpen = useSignal(false);
+  const [deletionDialogOpen, setDeletionDialogOpen] = useState(false);
   const queryClient = useQueryClient();
 
   const deleteMutation = useMutation({
@@ -136,7 +132,7 @@ export const TorrentCard: FunctionComponent<{
     <>
       <TorrentContextMenu
         onDelete={() => {
-          deletionDialogOpen.value = true;
+          setDeletionDialogOpen(true);
         }}
       >
         <Card className="relative">
@@ -238,8 +234,8 @@ export const TorrentCard: FunctionComponent<{
       </TorrentContextMenu>
 
       <TorrentDeletionDialog
-        isOpen={deletionDialogOpen.value}
-        onClose={() => (deletionDialogOpen.value = false)}
+        isOpen={deletionDialogOpen}
+        onClose={() => setDeletionDialogOpen(false)}
         onSubmit={(deleteFiles) => {
           deleteMutation.mutate(deleteFiles);
         }}

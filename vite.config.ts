@@ -19,10 +19,7 @@ export default defineConfig({
     TanStackRouterVite({}),
     react({
       babel: {
-        plugins: [
-          ["module:@preact/signals-react-transform"],
-          ["babel-plugin-react-compiler", ReactCompilerConfig],
-        ],
+        plugins: [["babel-plugin-react-compiler", ReactCompilerConfig]],
       },
     }),
     tailwindcss(),

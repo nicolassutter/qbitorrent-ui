@@ -32,9 +32,8 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { queryOptions, useMutation, useQuery } from "@tanstack/react-query";
 import bytes from "bytes";
 import { priorityMap, TorrentFilesTree } from "@/components/TorrentFilesTree";
-import { ComponentProps, useEffect, useMemo } from "react";
+import { ComponentProps, useMemo, useState } from "react";
 import { TorrentsFilePrioPostData } from "@/client";
-import { useSignal } from "@preact/signals-react";
 
 const formatDate = (timestamp: number) => {
   return new Date(timestamp * 1000).toLocaleString();
@@ -96,7 +95,8 @@ export default function Torrent() {
 
   const torrent = useQuery(torrentOptions);
 
-  const allFilesPriority = useSignal<keyof typeof priorityMap>(0);
+  const [allFilesPriority, setAllFilesPriority] =
+    useState<keyof typeof priorityMap>(0);
 
   const treeFiles = useMemo(() => {
     return (
@@ -321,10 +321,10 @@ export default function Torrent() {
                   onSubmit={(e) => {
                     e.preventDefault();
 
-                    if (allFilesPriority.value === undefined) return;
+                    if (allFilesPriority === undefined) return;
 
                     filePriorityMutation.mutate({
-                      priority: allFilesPriority.value,
+                      priority: allFilesPriority,
                       hash: torrentHash,
                       id:
                         files.data
@@ -334,10 +334,10 @@ export default function Torrent() {
                   }}
                 >
                   <Select
-                    value={String(allFilesPriority.value)}
+                    value={String(allFilesPriority)}
                     onValueChange={(v) => {
-                      const value = Number(v) as typeof allFilesPriority.value;
-                      allFilesPriority.value = value;
+                      const value = Number(v) as typeof allFilesPriority;
+                      setAllFilesPriority(value);
                     }}
                   >
                     <SelectTrigger
