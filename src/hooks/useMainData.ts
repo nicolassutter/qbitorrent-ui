@@ -7,7 +7,10 @@ export const useMainData = () => {
   const mainData = useQuery({
     queryKey: ["mainData"],
     queryFn: async (): Promise<
-      Pick<SyncMaindataPostResponse, "full_update" | "rid" | "server_state">
+      Pick<
+        SyncMaindataPostResponse,
+        "full_update" | "rid" | "server_state" | "categories" | "tags"
+      >
     > => {
       const oldData = mainData.data ?? {};
       // the previous request id to compare to

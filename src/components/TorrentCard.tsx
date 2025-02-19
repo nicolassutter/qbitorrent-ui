@@ -6,16 +6,22 @@ import { Progress } from "./ui/progress";
 import { LucideLoaderCircle, LucideTrash } from "lucide-react";
 import { FunctionComponent, useId, useState, type ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
-import { cn } from "@/lib/utils";
+import { cn, toDecimals } from "@/lib/utils";
 import {
   ContextMenu,
   ContextMenuContent,
   ContextMenuItem,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
-import { Dialog, DialogContent, DialogFooter, DialogHeader } from "./ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogDescription,
+  DialogTitle,
+} from "./ui/dialog";
 import { Button } from "./ui/button";
-import { DialogDescription, DialogTitle } from "@radix-ui/react-dialog";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { torrentsDeletePost } from "@/client";
 import { Checkbox } from "./ui/checkbox";
@@ -128,6 +134,8 @@ export const TorrentCard: FunctionComponent<{
     },
   });
 
+  const torrentProgress = toDecimals((torrent.progress ?? 0) * 100, 2);
+
   return (
     <>
       <TorrentContextMenu
@@ -179,8 +187,8 @@ export const TorrentCard: FunctionComponent<{
               <div className="w-full max-w-56">
                 <p>Progress</p>
                 <div className="flex gap-1 items-center">
-                  <Progress value={(torrent.progress ?? 0) * 100} />
-                  <p>{(torrent.progress ?? 0) * 100}%</p>
+                  <Progress value={torrentProgress} />
+                  <p>{torrentProgress}%</p>
                 </div>
               </div>
 
