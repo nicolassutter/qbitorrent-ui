@@ -7,6 +7,7 @@ import {
   LucideLoaderCircle,
   LucidePause,
   LucidePlay,
+  LucideShapes,
   LucideTrash,
 } from "lucide-react";
 import { FunctionComponent, useId, useState, type ReactNode } from "react";
@@ -16,6 +17,13 @@ import {
   ContextMenu,
   ContextMenuContent,
   ContextMenuItem,
+  ContextMenuLabel,
+  ContextMenuRadioGroup,
+  ContextMenuRadioItem,
+  ContextMenuSeparator,
+  ContextMenuSub,
+  ContextMenuSubContent,
+  ContextMenuSubTrigger,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
 import {
@@ -29,27 +37,35 @@ import {
 import { Button } from "./ui/button";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
-  appWebapiVersionGet,
   torrentsDeletePost,
   torrentsPausePost,
   torrentsResumePost,
+  torrentsSetCategoryPost,
 } from "@/client";
 import { Checkbox } from "./ui/checkbox";
 import { Label } from "./ui/label";
 import { useAppVersion } from "@/hooks/useVersion";
+import { useCategories } from "@/hooks/useCategories";
 
 export type TorrentContextMenuProps = {
   children: ReactNode;
   onDelete?: () => void;
   onPause?: () => void;
   onStart?: () => void;
+  onSetCategory?: (category: string) => void;
+  /** The category of the torrent */
+  category?: string;
 };
 const TorrentContextMenu = ({
   children,
   onDelete,
   onPause,
   onStart,
+  onSetCategory,
+  category,
 }: TorrentContextMenuProps) => {
+  const { categories } = useCategories();
+
   return (
     <ContextMenu>
       <ContextMenuTrigger>{children}</ContextMenuTrigger>
@@ -60,7 +76,7 @@ const TorrentContextMenu = ({
             onStart?.();
           }}
         >
-          <LucidePlay />
+          <LucidePlay className="text-popover-foreground" />
           Start
         </ContextMenuItem>
 
@@ -69,16 +85,54 @@ const TorrentContextMenu = ({
             onPause?.();
           }}
         >
-          <LucidePause />
+          <LucidePause className="text-popover-foreground" />
           Pause
         </ContextMenuItem>
+
+        <ContextMenuSeparator />
+
+        {categories.length > 0 && (
+          <>
+            <ContextMenuSub>
+              <ContextMenuSubTrigger className="gap-2">
+                <LucideShapes className="text-popover-foreground" />
+                Set category
+              </ContextMenuSubTrigger>
+
+              <ContextMenuSubContent className="w-48">
+                <ContextMenuRadioGroup
+                  value={category}
+                  onValueChange={(value) => {
+                    onSetCategory?.(value);
+                  }}
+                >
+                  <ContextMenuLabel inset>Categories</ContextMenuLabel>
+                  <ContextMenuSeparator />
+                  {categories.map((category) => (
+                    <ContextMenuRadioItem
+                      key={category.key}
+                      value={category.key}
+                    >
+                      {category.name}
+                    </ContextMenuRadioItem>
+                  ))}
+                  <ContextMenuRadioItem value={""}>
+                    (No category)
+                  </ContextMenuRadioItem>
+                </ContextMenuRadioGroup>
+              </ContextMenuSubContent>
+            </ContextMenuSub>
+
+            <ContextMenuSeparator />
+          </>
+        )}
 
         <ContextMenuItem
           onSelect={() => {
             onDelete?.();
           }}
         >
-          <LucideTrash />
+          <LucideTrash className="text-popover-foreground" />
           Delete
         </ContextMenuItem>
       </ContextMenuContent>
@@ -152,7 +206,7 @@ export const TorrentCard: FunctionComponent<{
 
   const [deletionDialogOpen, setDeletionDialogOpen] = useState(false);
   const queryClient = useQueryClient();
-  const { version: appVersion, isV5orHigher } = useAppVersion();
+  const { isV5orHigher } = useAppVersion();
 
   const deleteTorrent = useMutation({
     mutationFn: async (deleteFiles: boolean) => {
@@ -208,6 +262,24 @@ export const TorrentCard: FunctionComponent<{
     // since the torrents query will be updated on the next interval
   });
 
+  const setTorrentCategory = useMutation({
+    mutationFn: async (category: string) => {
+      if (!torrent.hash) return;
+
+      await torrentsSetCategoryPost({
+        body: {
+          hashes: [torrent.hash],
+          category,
+        },
+      });
+    },
+    onSettled: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ["torrents"],
+      });
+    },
+  });
+
   const torrentProgress = toDecimals((torrent.progress ?? 0) * 100, 2);
 
   return (
@@ -221,6 +293,10 @@ export const TorrentCard: FunctionComponent<{
         }}
         onPause={() => {
           pauseTorrent.mutate();
+        }}
+        category={torrent.category}
+        onSetCategory={(category) => {
+          setTorrentCategory.mutate(category);
         }}
       >
         <Card className="relative">

@@ -37,8 +37,8 @@ import { z } from "zod";
 import { CustomPagination } from "@/components/CustomPagination";
 import { Button } from "@/components/ui/button";
 import { LucidePlus } from "lucide-react";
-import { useMainData } from "@/hooks/useMainData";
 import { usePreferences } from "@/hooks/usePreferences";
+import { useCategories } from "@/hooks/useCategories";
 
 const pageName = "p";
 const SearchSchema = z.object({
@@ -112,25 +112,7 @@ export const TorrentAdditionDialog: FunctionComponent<{
     setDialogOpen(false);
   }
 
-  const { mainData } = useMainData();
-  const cats = mainData.data?.categories;
-
-  const categories = useMemo(() => {
-    return Object.entries(cats ?? {}).reduce(
-      (acc, [key, value]) => {
-        if (!value.name) return acc;
-
-        acc.push({
-          key,
-          name: value.name,
-          savePath: value.savePath,
-        });
-
-        return acc;
-      },
-      [] as { key: string; name: string; savePath?: string }[],
-    );
-  }, [cats]);
+  const { categories, pending: categoriesPending } = useCategories();
 
   return (
     <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
@@ -199,7 +181,7 @@ export const TorrentAdditionDialog: FunctionComponent<{
             className="text-field"
           />
 
-          {mainData.isPending && <p>Loading categories...</p>}
+          {categoriesPending && <p>Loading categories...</p>}
 
           {categories.length > 0 && (
             <>
@@ -415,8 +397,11 @@ export default function HomeComponent() {
         </div>
 
         <div className="w-full max-w-80 flex items-center gap-2">
-          <Label className="shrink-0">Text filter</Label>
+          <Label htmlFor={`text-filter-${id}`} className="shrink-0">
+            Text filter
+          </Label>
           <Input
+            id={`text-filter-${id}`}
             type="text"
             placeholder="Ubuntu"
             value={textFilter}
