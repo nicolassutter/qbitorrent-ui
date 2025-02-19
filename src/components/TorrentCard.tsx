@@ -10,7 +10,7 @@ import {
   LucideShapes,
   LucideTrash,
 } from "lucide-react";
-import { FunctionComponent, useId, useState, type ReactNode } from "react";
+import { FunctionComponent, useState, type ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 import { cn, toDecimals } from "@/lib/utils";
 import {
@@ -26,15 +26,6 @@ import {
   ContextMenuSubTrigger,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogDescription,
-  DialogTitle,
-} from "./ui/dialog";
-import { Button } from "./ui/button";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   torrentsDeletePost,
@@ -42,10 +33,9 @@ import {
   torrentsResumePost,
   torrentsSetCategoryPost,
 } from "@/client";
-import { Checkbox } from "./ui/checkbox";
-import { Label } from "./ui/label";
 import { useAppVersion } from "@/hooks/useVersion";
 import { useCategories } from "@/hooks/useCategories";
+import { TorrentDeletionDialog } from "./TorrentDeletionDialog";
 
 export type TorrentContextMenuProps = {
   children: ReactNode;
@@ -139,65 +129,6 @@ const TorrentContextMenu = ({
         </ContextMenuItem>
       </ContextMenuContent>
     </ContextMenu>
-  );
-};
-
-export const TorrentDeletionDialog: FunctionComponent<{
-  isOpen: boolean;
-  onClose: () => void;
-  onSubmit: (deleteFiles: boolean) => void;
-}> = ({ isOpen, onClose, onSubmit }) => {
-  const [deleteFiles, setDeleteFiles] = useState(false);
-  const id = useId();
-  const checkboxId = `deleteFiles-${id}`;
-
-  return (
-    <Dialog
-      open={isOpen}
-      onOpenChange={(v) => {
-        if (!v) {
-          onClose();
-        }
-      }}
-    >
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Delete torrent</DialogTitle>
-          <DialogDescription>
-            Are you sure you want to delete this torrent?
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 shadow">
-          <Checkbox
-            checked={deleteFiles}
-            onCheckedChange={(v) => {
-              if (typeof v === "boolean") setDeleteFiles(v);
-            }}
-            id={checkboxId}
-          />
-          <div className="flex flex-col gap-2 leading-none">
-            <Label htmlFor={checkboxId} className="block">
-              Delete the torrent&apos;s files ?
-            </Label>
-            <p className="text-sm text-muted-foreground">
-              This will{" "}
-              <span className="font-bold text-foreground">permanently</span>{" "}
-              delete the torrent&apos;s files from your device.
-            </p>
-          </div>
-        </div>
-
-        <DialogFooter>
-          <Button variant="ghost" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button variant="destructive" onClick={() => onSubmit(deleteFiles)}>
-            Delete
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
   );
 };
 
@@ -403,9 +334,13 @@ export const TorrentCard: FunctionComponent<{
 
       <TorrentDeletionDialog
         isOpen={deletionDialogOpen}
-        onClose={() => setDeletionDialogOpen(false)}
+        onOpenChange={setDeletionDialogOpen}
         onSubmit={(deleteFiles) => {
-          deleteTorrent.mutate(deleteFiles);
+          deleteTorrent.mutate(deleteFiles, {
+            onSettled() {
+              setDeletionDialogOpen(false);
+            },
+          });
         }}
       ></TorrentDeletionDialog>
     </>

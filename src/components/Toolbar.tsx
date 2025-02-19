@@ -10,7 +10,12 @@ import {
 } from "@/components/ui/dialog";
 import { torrentsAddPost } from "@/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { LucidePlus, LucideSquare, LucideSquareX } from "lucide-react";
+import {
+  LucidePlus,
+  LucideSquare,
+  LucideSquareX,
+  LucideTrash,
+} from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import {
@@ -32,6 +37,7 @@ import { Button } from "@/components/ui/button";
 import { usePreferences } from "@/hooks/usePreferences";
 import { useCategories } from "@/hooks/useCategories";
 import { useSetState } from "react-use";
+import { TorrentDeletionDialog } from "./TorrentDeletionDialog";
 
 type TorrentAdditionData = {
   torrentSource: string | File;
@@ -217,6 +223,7 @@ export const TorrentAdditionDialog: FunctionComponent<{
 export const Toolbar: FunctionComponent<{
   isSelecting: boolean;
   onSelectionModeChange: (isSelectionMode: boolean) => void;
+  onDelete: (deleteFiles: boolean) => void | Promise<void>;
 }> = (props) => {
   const queryClient = useQueryClient();
 
@@ -241,6 +248,8 @@ export const Toolbar: FunctionComponent<{
     },
   });
 
+  const [deletionDialogOpen, setDeletionDialogOpen] = useState(false);
+
   return (
     <div
       className="toolbar sticky top-0 -mt-(--offset) pt-(--offset) z-50 bg-background/90 backdrop-blur-lg"
@@ -262,6 +271,25 @@ export const Toolbar: FunctionComponent<{
             <LucideSquare aria-hidden="true" />
           )}
         </Button>
+
+        {props.isSelecting && (
+          <TorrentDeletionDialog
+            isOpen={deletionDialogOpen}
+            onOpenChange={setDeletionDialogOpen}
+            onSubmit={async (deleteFiles) => {
+              await props.onDelete(deleteFiles);
+              setDeletionDialogOpen(false);
+            }}
+          >
+            <Button
+              variant="ghost"
+              size={"icon"}
+              title="Delete selected torrents"
+            >
+              <LucideTrash aria-hidden="true" />
+            </Button>
+          </TorrentDeletionDialog>
+        )}
 
         <TorrentAdditionDialog
           onSubmit={async (data) => {

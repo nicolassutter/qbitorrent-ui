@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { torrentsInfoPost } from "@/client/sdk.gen";
-import { useQuery } from "@tanstack/react-query";
+import { torrentsDeletePost, torrentsInfoPost } from "@/client/sdk.gen";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { TorrentCard } from "@/components/TorrentCard";
 import {
   Select,
@@ -110,11 +110,46 @@ export default function HomeComponent() {
     }
   }, [isSelecting]);
 
+  const deleteTorrents = useMutation({
+    mutationFn: async ({
+      deleteFiles,
+      hashes,
+    }: {
+      hashes: string[];
+      deleteFiles: boolean;
+    }) => {
+      await torrentsDeletePost({
+        body: {
+          // @ts-expect-error hashes should be a string
+          hashes: hashes.join("|"),
+          deleteFiles,
+        },
+      });
+    },
+    onSettled: async () => {
+      await torrents.refetch();
+    },
+  });
+
   return (
     <main className="">
       <Toolbar
         isSelecting={isSelecting}
         onSelectionModeChange={setIsSelecting}
+        onDelete={(deleteFiles) => {
+          if (selectedTorrents.length === 0) return;
+
+          try {
+            return deleteTorrents.mutateAsync({
+              deleteFiles,
+              hashes: selectedTorrents,
+            });
+            // eslint-disable-next-line no-empty
+          } catch (_error) {
+          } finally {
+            setIsSelecting(false);
+          }
+        }}
       />
 
       <div className="flex flex-col xl:flex-row xl:items-center gap-4 justify-between pt-4">
