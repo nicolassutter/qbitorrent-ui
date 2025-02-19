@@ -38,8 +38,7 @@ import { CustomPagination } from "@/components/CustomPagination";
 import { Button } from "@/components/ui/button";
 import { LucidePlus } from "lucide-react";
 import { useMainData } from "@/hooks/useMainData";
-import { preferencesOptions, usePreferences } from "@/hooks/usePreferences";
-import { queryClient } from "@/lib/queryClient";
+import { usePreferences } from "@/hooks/usePreferences";
 
 const pageName = "p";
 const SearchSchema = z.object({
@@ -49,10 +48,6 @@ const SearchSchema = z.object({
 export const Route = createFileRoute("/")({
   component: HomeComponent,
   validateSearch: SearchSchema,
-  loader: () => {
-    // Prefetch the preferences to minimize loading state, should be non blocking
-    queryClient.ensureQueryData(preferencesOptions);
-  },
 });
 
 type TorrentAdditionData = {

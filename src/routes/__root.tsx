@@ -12,6 +12,8 @@ import { queryClient } from "@/lib/queryClient";
 import { LucideLoaderCircle } from "lucide-react";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { type ReactNode } from "react";
+import { preferencesOptions } from "@/hooks/usePreferences";
+import { appVersionOptions } from "@/hooks/useVersion";
 
 const AppLoader = () => {
   return (
@@ -26,6 +28,19 @@ export const Route = createRootRoute({
   component: RootComponent,
   pendingComponent: AppLoader,
   wrapInSuspense: true,
+  async loader() {
+    if (import.meta.env.DEV) {
+      console.log("Root loader triggered");
+    }
+
+    const isAuth = await checkAuth();
+
+    if (isAuth) {
+      // load non blocking, global data
+      queryClient.ensureQueryData(preferencesOptions);
+      queryClient.ensureQueryData(appVersionOptions);
+    }
+  },
   async beforeLoad({ location }) {
     const isAuth = await checkAuth();
 

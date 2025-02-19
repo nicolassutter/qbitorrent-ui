@@ -3,7 +3,12 @@ import type { TorrentInfo } from "@/client/types.gen";
 import { Badge } from "./ui/badge";
 import bytes from "bytes";
 import { Progress } from "./ui/progress";
-import { LucideLoaderCircle, LucideTrash } from "lucide-react";
+import {
+  LucideLoaderCircle,
+  LucidePause,
+  LucidePlay,
+  LucideTrash,
+} from "lucide-react";
 import { FunctionComponent, useId, useState, type ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 import { cn, toDecimals } from "@/lib/utils";
@@ -23,24 +28,56 @@ import {
 } from "./ui/dialog";
 import { Button } from "./ui/button";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { torrentsDeletePost } from "@/client";
+import {
+  appWebapiVersionGet,
+  torrentsDeletePost,
+  torrentsPausePost,
+  torrentsResumePost,
+} from "@/client";
 import { Checkbox } from "./ui/checkbox";
 import { Label } from "./ui/label";
+import { useAppVersion } from "@/hooks/useVersion";
 
 export type TorrentContextMenuProps = {
   children: ReactNode;
   onDelete?: () => void;
+  onPause?: () => void;
+  onStart?: () => void;
 };
 const TorrentContextMenu = ({
   children,
   onDelete,
+  onPause,
+  onStart,
 }: TorrentContextMenuProps) => {
   return (
     <ContextMenu>
       <ContextMenuTrigger>{children}</ContextMenuTrigger>
 
       <ContextMenuContent>
-        <ContextMenuItem onSelect={() => onDelete?.()}>
+        <ContextMenuItem
+          onSelect={() => {
+            onStart?.();
+          }}
+        >
+          <LucidePlay />
+          Start
+        </ContextMenuItem>
+
+        <ContextMenuItem
+          onSelect={() => {
+            onPause?.();
+          }}
+        >
+          <LucidePause />
+          Pause
+        </ContextMenuItem>
+
+        <ContextMenuItem
+          onSelect={() => {
+            onDelete?.();
+          }}
+        >
           <LucideTrash />
           Delete
         </ContextMenuItem>
@@ -115,8 +152,9 @@ export const TorrentCard: FunctionComponent<{
 
   const [deletionDialogOpen, setDeletionDialogOpen] = useState(false);
   const queryClient = useQueryClient();
+  const { version: appVersion, isV5orHigher } = useAppVersion();
 
-  const deleteMutation = useMutation({
+  const deleteTorrent = useMutation({
     mutationFn: async (deleteFiles: boolean) => {
       if (!torrent.hash) return;
 
@@ -134,6 +172,42 @@ export const TorrentCard: FunctionComponent<{
     },
   });
 
+  const startTorrent = useMutation({
+    mutationFn: async () => {
+      if (!torrent.hash) return;
+
+      await torrentsResumePost({
+        // v5+ has a different endpoint for starting torrents
+        ...(typeof isV5orHigher === "boolean" && isV5orHigher
+          ? { url: "/torrents/start" }
+          : {}),
+        body: {
+          hashes: [torrent.hash],
+        },
+      });
+    },
+    // starting a torrent takes a few seconds, so we don't need to invalidate the cache
+    // since the torrents query will be updated on the next interval
+  });
+
+  const pauseTorrent = useMutation({
+    mutationFn: async () => {
+      if (!torrent.hash) return;
+
+      await torrentsPausePost({
+        // v5+ has a different endpoint for pausing torrents
+        ...(typeof isV5orHigher === "boolean" && isV5orHigher
+          ? { url: "/torrents/stop" }
+          : {}),
+        body: {
+          hashes: [torrent.hash],
+        },
+      });
+    },
+    // pausing a torrent takes a few seconds, so we don't need to invalidate the cache
+    // since the torrents query will be updated on the next interval
+  });
+
   const torrentProgress = toDecimals((torrent.progress ?? 0) * 100, 2);
 
   return (
@@ -141,6 +215,12 @@ export const TorrentCard: FunctionComponent<{
       <TorrentContextMenu
         onDelete={() => {
           setDeletionDialogOpen(true);
+        }}
+        onStart={() => {
+          startTorrent.mutate();
+        }}
+        onPause={() => {
+          pauseTorrent.mutate();
         }}
       >
         <Card className="relative">
@@ -245,7 +325,7 @@ export const TorrentCard: FunctionComponent<{
         isOpen={deletionDialogOpen}
         onClose={() => setDeletionDialogOpen(false)}
         onSubmit={(deleteFiles) => {
-          deleteMutation.mutate(deleteFiles);
+          deleteTorrent.mutate(deleteFiles);
         }}
       ></TorrentDeletionDialog>
     </>

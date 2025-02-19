@@ -31,7 +31,6 @@ export function setIsAuth(queryClient: QueryClient, v: boolean) {
 
 export const checkAuth = async () => {
   const isAuth = await queryClient.ensureQueryData(checkAuthOptions);
-
   return isAuth;
 };
 
