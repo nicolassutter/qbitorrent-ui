@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { torrentsAddPost, torrentsInfoPost } from "@/client/sdk.gen";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { torrentsInfoPost } from "@/client/sdk.gen";
+import { useQuery } from "@tanstack/react-query";
 import { TorrentCard } from "@/components/TorrentCard";
 import {
   Select,
@@ -9,36 +9,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 import { TorrentInfo } from "@/client";
-import { useLocalStorage, useSetState } from "react-use";
-import {
-  FunctionComponent,
-  ReactNode,
-  useEffect,
-  useId,
-  useMemo,
-  useState,
-} from "react";
-import { Label } from "@/components/ui/label";
+import { useLocalStorage } from "react-use";
+import { useEffect, useId, useMemo, useState } from "react";
 import { createQueryParam } from "@/hooks/createQueryParam";
+import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { z } from "zod";
 import { CustomPagination } from "@/components/CustomPagination";
-import { Button } from "@/components/ui/button";
-import { LucidePlus } from "lucide-react";
-import { usePreferences } from "@/hooks/usePreferences";
-import { useCategories } from "@/hooks/useCategories";
+import { Toolbar } from "@/components/Toolbar";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const pageName = "p";
 const SearchSchema = z.object({
@@ -49,188 +30,6 @@ export const Route = createFileRoute("/")({
   component: HomeComponent,
   validateSearch: SearchSchema,
 });
-
-type TorrentAdditionData = {
-  torrentSource: string | File;
-  savePath: string;
-  category?: string;
-};
-
-export const TorrentAdditionDialog: FunctionComponent<{
-  onSubmit: (data: TorrentAdditionData) => void | Promise<void>;
-  children: ReactNode;
-  defaultSavePath?: string;
-}> = ({ onSubmit, children }) => {
-  const preferences = usePreferences();
-  const defaultSavePath = preferences.data?.save_path;
-  const [dialogOpen, setDialogOpen] = useState(false);
-
-  const defaultState = {
-    torrentSource: "",
-    savePath: defaultSavePath,
-    category: undefined as string | undefined,
-    torrentFile: undefined as File | undefined,
-  };
-  const [{ torrentSource, torrentFile, savePath, category }, setState] =
-    useSetState(defaultState);
-
-  useEffect(() => {
-    if (preferences.data && !savePath) {
-      setState({ savePath: preferences.data.save_path ?? undefined });
-    }
-  }, [preferences.data, savePath]);
-
-  const id = useId();
-  const inputId = `torrentSource-${id}`;
-  const fileInputId = `torrentSourceFile-${id}`;
-  const savePathId = `savePath-${id}`;
-
-  // reset state when dialog is closed
-  useEffect(() => {
-    if (!dialogOpen) {
-      setState(defaultState);
-    }
-  }, [dialogOpen]);
-
-  async function handleSubmit() {
-    const source = torrentSource || torrentFile;
-    if (!source) return;
-
-    const finalSavePath = savePath || defaultSavePath;
-
-    if (!finalSavePath) {
-      console.error("Save path is required");
-      return;
-    }
-
-    await onSubmit({
-      torrentSource: source,
-      savePath: finalSavePath,
-      category,
-    });
-
-    setDialogOpen(false);
-  }
-
-  const { categories, pending: categoriesPending } = useCategories();
-
-  return (
-    <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-      <DialogTrigger asChild>{children}</DialogTrigger>
-
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>Add New Torrent</DialogTitle>
-          <DialogDescription>
-            Enter a magnet link or upload a torrent file to add a new torrent.
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="flex flex-col space-y-4">
-          {!torrentFile && (
-            <>
-              <Label htmlFor={inputId} className="block">
-                Magnet link
-              </Label>
-
-              <Input
-                id={inputId}
-                type="text"
-                placeholder="Enter magnet link"
-                value={torrentSource}
-                onChange={(e) => setState({ torrentSource: e.target.value })}
-                className="text-field"
-              />
-            </>
-          )}
-
-          {torrentSource === "" && (
-            <>
-              <Label htmlFor={fileInputId} className="block">
-                Or upload a torrent file
-              </Label>
-
-              <Input
-                type="file"
-                accept=".torrent"
-                id={fileInputId}
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) {
-                    setState({ torrentFile: file });
-                  }
-                }}
-              />
-            </>
-          )}
-
-          <Label htmlFor={savePathId} className="block">
-            Save Path
-          </Label>
-
-          <Input
-            id={savePathId}
-            type="text"
-            placeholder="Enter save path"
-            value={savePath}
-            onChange={(e) =>
-              setState({
-                savePath: e.target.value,
-              })
-            }
-            className="text-field"
-          />
-
-          {categoriesPending && <p>Loading categories...</p>}
-
-          {categories.length > 0 && (
-            <>
-              <Label htmlFor="category" className="block">
-                Category
-              </Label>
-
-              <Select
-                value={category}
-                onValueChange={(value) =>
-                  setState({
-                    category: value,
-                  })
-                }
-              >
-                <SelectTrigger id="category">
-                  <SelectValue placeholder="Select a category" />
-                </SelectTrigger>
-                <SelectContent>
-                  {categories.map((cat) => (
-                    <SelectItem key={cat.key} value={cat.name}>
-                      {cat.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </>
-          )}
-        </div>
-
-        <DialogFooter>
-          <DialogClose asChild>
-            <Button variant="ghost">Cancel</Button>
-          </DialogClose>
-
-          <DialogClose asChild>
-            <Button
-              variant="default"
-              onClick={handleSubmit}
-              disabled={!torrentSource && !torrentFile}
-            >
-              Add Torrent
-            </Button>
-          </DialogClose>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-};
 
 export default function HomeComponent() {
   const defaultSort: keyof TorrentInfo = "added_on";
@@ -300,30 +99,25 @@ export default function HomeComponent() {
     }
   }, [pageCount, page()]);
 
-  const torrentAddMutation = useMutation({
-    mutationFn: async (data: TorrentAdditionData) => {
-      await torrentsAddPost({
-        body: {
-          urls:
-            [data.torrentSource]
-              .filter((s) => typeof s === "string")
-              .join("\n") || undefined,
-          torrents: [data.torrentSource].filter((s) => s instanceof File),
-          savepath: data.savePath,
-          category: data.category || undefined,
-        },
-      });
-    },
-    onSettled: async () => {
-      await torrents.refetch();
-    },
-  });
-
   const id = useId();
+
+  const [isSelecting, setIsSelecting] = useState(false);
+  const [selectedTorrents, setSelectedTorrents] = useState<string[]>([]);
+  // Clear selected torrents when selection mode is turned off
+  useEffect(() => {
+    if (!isSelecting) {
+      setSelectedTorrents([]);
+    }
+  }, [isSelecting]);
 
   return (
     <main className="">
-      <div className="flex flex-col xl:flex-row xl:items-center gap-4 justify-between">
+      <Toolbar
+        isSelecting={isSelecting}
+        onSelectionModeChange={setIsSelecting}
+      />
+
+      <div className="flex flex-col xl:flex-row xl:items-center gap-4 justify-between pt-4">
         <div className="flex items-center gap-[inherit] shrink-0">
           <div className="grid gap-2">
             <Label htmlFor={`per-page-${id}`} className="text-sm">
@@ -352,7 +146,6 @@ export default function HomeComponent() {
               </SelectContent>
             </Select>
           </div>
-
           <div className="grid gap-2">
             <Label htmlFor={`sort-${id}`} className="text-sm">
               Sort by
@@ -395,7 +188,6 @@ export default function HomeComponent() {
             </Label>
           </div>
         </div>
-
         <div className="w-full max-w-80 flex items-center gap-2">
           <Label htmlFor={`text-filter-${id}`} className="shrink-0">
             Text filter
@@ -411,24 +203,49 @@ export default function HomeComponent() {
         </div>
       </div>
 
-      <div className="flex gap-2 mt-2">
-        <TorrentAdditionDialog
-          onSubmit={async (data) => {
-            try {
-              return torrentAddMutation.mutateAsync(data);
-            } catch (_error) {}
-          }}
-        >
-          <Button variant="default">
-            <LucidePlus />
-            Add Torrent
-          </Button>
-        </TorrentAdditionDialog>
+      <div className="mt-4 grid gap-1">
+        <p>{torrents.data?.length ?? 0} torrents</p>
+        {isSelecting && (
+          <p>{selectedTorrents?.length ?? 0} selected torrents</p>
+        )}
       </div>
 
-      <div className="grid gap-2 mt-4">
+      <div className="grid gap-2 mt-1">
         {currentPageTorrents.map((torrent) => (
-          <TorrentCard key={torrent.hash} torrent={torrent} />
+          <div className="flex items-center gap-2" key={torrent.hash}>
+            {isSelecting && (
+              <Checkbox
+                id={`torrentcard-${torrent.hash}`}
+                className="cursor-pointer size-5"
+                checked={selectedTorrents.includes(torrent.hash!)}
+                onCheckedChange={(checked) => {
+                  if (checked) {
+                    setSelectedTorrents((prev) =>
+                      [...prev, torrent.hash].filter(
+                        (e) => typeof e === "string",
+                      ),
+                    );
+                  } else {
+                    setSelectedTorrents((prev) =>
+                      prev.filter((hash) => hash !== torrent.hash),
+                    );
+                  }
+                }}
+              />
+            )}
+
+            <div className="relative w-full">
+              {isSelecting && (
+                <label
+                  htmlFor={`torrentcard-${torrent.hash}`}
+                  className="absolute inset-0 z-10 opacity-0 cursor-pointer"
+                >
+                  Select torrent {torrent.name}
+                </label>
+              )}
+              <TorrentCard torrent={torrent} />
+            </div>
+          </div>
         ))}
       </div>
 

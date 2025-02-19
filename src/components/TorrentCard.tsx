@@ -49,6 +49,7 @@ import { useCategories } from "@/hooks/useCategories";
 
 export type TorrentContextMenuProps = {
   children: ReactNode;
+  className?: string;
   onDelete?: () => void;
   onPause?: () => void;
   onStart?: () => void;
@@ -63,12 +64,13 @@ const TorrentContextMenu = ({
   onStart,
   onSetCategory,
   category,
+  className,
 }: TorrentContextMenuProps) => {
   const { categories } = useCategories();
 
   return (
     <ContextMenu>
-      <ContextMenuTrigger>{children}</ContextMenuTrigger>
+      <ContextMenuTrigger className={className}>{children}</ContextMenuTrigger>
 
       <ContextMenuContent>
         <ContextMenuItem
@@ -201,6 +203,7 @@ export const TorrentDeletionDialog: FunctionComponent<{
 
 export const TorrentCard: FunctionComponent<{
   torrent: TorrentInfo;
+  className?: string;
 }> = (props) => {
   const torrent = props.torrent;
 
@@ -298,6 +301,7 @@ export const TorrentCard: FunctionComponent<{
         onSetCategory={(category) => {
           setTorrentCategory.mutate(category);
         }}
+        className={props.className}
       >
         <Card className="relative">
           <CardHeader>
