@@ -15,6 +15,7 @@ import { type ReactNode } from "react";
 import { preferencesOptions } from "@/hooks/usePreferences";
 import { appVersionOptions } from "@/hooks/useVersion";
 import { TorrentDeletionDialog } from "@/components/TorrentDeletionDialog";
+import "@fontsource-variable/geist/wght.css";
 
 const AppLoader = () => {
   return (
@@ -73,7 +74,7 @@ function App({ children }: { children: ReactNode }) {
 
   return (
     <>
-      <div className="flex">
+      <div className={"app flex"}>
         {location.pathname !== "/login" && <Sidebar />}
         <div className="w-full p-2">{children}</div>
       </div>
