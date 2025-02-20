@@ -251,6 +251,7 @@ export const TorrentCard: FunctionComponent<{
                 params={{
                   torrentHash: torrent.hash ?? "",
                 }}
+                className="underline underline-offset-4 hover:text-foreground/80 transition-colors"
               >
                 {torrent.name}
               </Link>
@@ -264,7 +265,7 @@ export const TorrentCard: FunctionComponent<{
                   <span className="text-sm font-medium flex items-center gap-2">
                     Progress
                     <Badge
-                      className={cn("text-sm", {
+                      className={cn({
                         "bg-indigo-600 dark:bg-indigo-400":
                           torrent.state === "uploading",
                         "bg-red-600 dark:bg-red-300": torrent.state === "error",
