@@ -1,7 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { TorrentInfo } from "@/client/types.gen";
-import bytes from "bytes";
-import { Progress } from "./ui/progress";
 import {
   ChevronDown,
   LucidePause,
@@ -11,7 +9,7 @@ import {
 } from "lucide-react";
 import { FunctionComponent, useState, type ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
-import { toDecimals } from "@/lib/utils";
+import { formatDate, formatSize, formatSpeed } from "@/lib/utils";
 import {
   ContextMenu,
   ContextMenuContent,
@@ -40,7 +38,7 @@ import {
   CollapsibleTrigger,
 } from "./ui/collapsible";
 import { Button } from "./ui/button";
-import { TorrentBadge } from "./TorrentBadge";
+import { TorrentProgress } from "./TorrentProgress";
 
 export type TorrentContextMenuProps = {
   children: ReactNode;
@@ -137,25 +135,6 @@ const TorrentContextMenu = ({
   );
 };
 
-const formatDate = (timestamp: number) => {
-  return new Date(timestamp * 1000).toLocaleString();
-};
-
-const formatSize = (b: number) => {
-  return bytes(b, { unitSeparator: " " });
-};
-
-const formatSpeed = (bytesPerSecond: number) => {
-  return `${formatSize(bytesPerSecond)}/s`;
-};
-
-const formatDuration = (seconds: number) => {
-  if (seconds === 8640000) return "∞";
-  const hours = Math.floor(seconds / 3600);
-  const minutes = Math.floor((seconds % 3600) / 60);
-  return `${hours}h ${minutes}m`;
-};
-
 export const TorrentCard: FunctionComponent<{
   torrent: TorrentInfo;
   className?: string;
@@ -221,8 +200,6 @@ export const TorrentCard: FunctionComponent<{
     },
   });
 
-  const torrentProgress = toDecimals((torrent.progress ?? 0) * 100, 2);
-
   return (
     <>
       <TorrentContextMenu
@@ -250,7 +227,7 @@ export const TorrentCard: FunctionComponent<{
                 params={{
                   torrentHash: torrent.hash ?? "",
                 }}
-                className="underline underline-offset-4 hover:text-foreground/80 transition-colors"
+                className="underline underline-offset-4 leading-snug hover:text-foreground/80 transition-colors"
               >
                 {torrent.name}
               </Link>
@@ -259,25 +236,7 @@ export const TorrentCard: FunctionComponent<{
 
           <CardContent>
             <div className="grid gap-4">
-              <div>
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-sm font-medium flex items-center gap-2">
-                    Progress
-                    <TorrentBadge state={torrent.state} />
-                  </span>
-
-                  <span className="text-sm">
-                    {formatSize(torrent.size ?? 0)} (ETA:{" "}
-                    {formatDuration(torrent.eta ?? 0)})
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Progress value={torrentProgress} className="flex-grow" />
-                  <span className="text-sm font-medium">
-                    {torrentProgress}%
-                  </span>
-                </div>
-              </div>
+              <TorrentProgress torrent={torrent} />
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
                 <div>

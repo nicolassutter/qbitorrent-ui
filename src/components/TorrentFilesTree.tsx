@@ -174,8 +174,13 @@ const TreeNode = (props: TreeView.NodeProviderProps<Node>) => {
         </TreeView.Branch>
       ) : (
         <TreeView.Item>
-          <Button variant="ghost" size="sm" asChild>
-            <TreeView.ItemText className="flex flex-col md:flex-row md:items-center items-stretch gap-2 w-full justify-start h-auto py-2 hover:bg-secondary/40">
+          <Button
+            variant="ghost"
+            size="sm"
+            asChild
+            className="flex flex-col lg:flex-row lg:items-center items-stretch gap-2 w-full justify-start h-auto py-2 hover:bg-secondary/40 cursor-default"
+          >
+            <TreeView.ItemText>
               <div className="flex items-center gap-[inherit]">
                 <FileIcon />
                 <span className="break-all shrink-1 whitespace-normal">
@@ -184,7 +189,7 @@ const TreeNode = (props: TreeView.NodeProviderProps<Node>) => {
               </div>
 
               {node.fileInfo && (
-                <div className="flex flex-col md:flex-row md:items-center gap-[inherit] md:ml-auto">
+                <div className="flex flex-col lg:flex-row lg:items-center gap-[inherit] lg:ml-auto">
                   {priority !== undefined && (
                     // select component to change file priority
                     <Select

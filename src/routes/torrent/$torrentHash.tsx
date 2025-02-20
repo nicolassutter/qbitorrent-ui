@@ -25,35 +25,19 @@ import {
   ChevronLeft,
 } from "lucide-react";
 
-import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import bytes from "bytes";
 import { priorityMap, TorrentFilesTree } from "@/components/TorrentFilesTree";
 import { ComponentProps, useMemo, useState } from "react";
 import { TorrentsFilePrioPostData } from "@/client";
-import { TorrentBadge } from "@/components/TorrentBadge";
-
-const formatDate = (timestamp: number) => {
-  return new Date(timestamp * 1000).toLocaleString();
-};
-
-const formatSize = (b: number) => {
-  return bytes(b, {
-    unitSeparator: " ",
-  });
-};
-
-const formatSpeed = (bytesPerSecond: number) => {
-  return `${formatSize(bytesPerSecond)}/s`;
-};
-
-const formatDuration = (seconds: number) => {
-  const hours = Math.floor(seconds / 3600);
-  const minutes = Math.floor((seconds % 3600) / 60);
-  return `${hours}h ${minutes}m`;
-};
+import { TorrentProgress } from "@/components/TorrentProgress";
+import {
+  formatDate,
+  formatDuration,
+  formatSize,
+  formatSpeed,
+} from "@/lib/utils";
 
 export const Route = createFileRoute("/torrent/$torrentHash")({
   component: Torrent,
@@ -149,14 +133,17 @@ export default function Torrent() {
           </Link>
         </Button>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-4">
           <Card>
             <CardHeader>
               <CardTitle>General Information</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-2">
+              <div className="grid gap-2 content-start">
                 <p className="font-semibold break-all">{torrent.data?.name}</p>
+                <div className="py-2">
+                  {torrent.data && <TorrentProgress torrent={torrent.data} />}
+                </div>
                 {torrent.data?.added_on !== undefined && (
                   <p>
                     <Calendar className="inline mr-2" /> Added:{" "}
@@ -183,7 +170,11 @@ export default function Torrent() {
                   <Tag className="inline mr-2" /> Category:{" "}
                   {torrent.data?.category}
                 </p>
-                <TorrentBadge state={torrent.data?.state}></TorrentBadge>
+                <p>
+                  <Users className="inline mr-2" />
+                  Seeds / Peers: {torrent.data?.num_seeds} /{" "}
+                  {torrent.data?.num_leechs}
+                </p>
               </div>
             </CardContent>
           </Card>
@@ -231,51 +222,6 @@ export default function Torrent() {
                     formatDuration(torrent.data.seeding_time)}
                 </p>
               </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Peers and Seeds</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <p>
-                  <Users className="inline mr-2" /> Seeds:{" "}
-                  {torrent.data?.num_seeds}
-                </p>
-                <p>
-                  <Users className="inline mr-2" /> Leechers:{" "}
-                  {torrent.data?.num_leechs}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Progress</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Progress
-                value={(torrent.data?.progress ?? 0) * 100}
-                className="w-full"
-              />
-
-              <p className="mt-2">
-                {((torrent.data?.progress ?? 0) * 100).toFixed(2)}% -{" "}
-                {formatSize(torrent.data?.completed ?? 0)} /{" "}
-                {formatSize(torrent.data?.size ?? 0)}
-              </p>
-
-              {torrent.data?.eta && (
-                <p>
-                  <Clock className="inline mr-2" /> ETA:{" "}
-                  {torrent.data?.eta === 8640000
-                    ? "∞"
-                    : formatDuration(torrent.data.eta)}
-                </p>
-              )}
             </CardContent>
           </Card>
 

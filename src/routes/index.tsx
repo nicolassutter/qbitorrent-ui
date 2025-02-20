@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { torrentsDeletePost, torrentsInfoPost } from "@/client/sdk.gen";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { torrentsInfoPost } from "@/client/sdk.gen";
+import { useQuery } from "@tanstack/react-query";
 import { TorrentCard } from "@/components/TorrentCard";
 import {
   Select,
