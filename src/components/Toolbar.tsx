@@ -252,7 +252,11 @@ export const Toolbar: FunctionComponent<{
       className="toolbar sticky top-0 -mt-(--offset) pt-(--offset) z-50 bg-background/90 backdrop-blur-lg"
       style={{ "--offset": "calc(var(--spacing) * 2)" } as CSSProperties}
     >
-      <div className="flex items-center gap-2 bg-sidebar rounded-sm p-2 justify-end">
+      <div className="flex items-center gap-2 bg-sidebar rounded-sm p-2">
+        <h1 className="mr-auto text-lg">
+          qBittorrent <span className="font-bold">UI</span>
+        </h1>
+
         {props.isSelecting && (
           <Button
             variant="ghost"
