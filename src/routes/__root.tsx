@@ -14,6 +14,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { type ReactNode } from "react";
 import { preferencesOptions } from "@/hooks/usePreferences";
 import { appVersionOptions } from "@/hooks/useVersion";
+import { TorrentDeletionDialog } from "@/components/TorrentDeletionDialog";
 
 const AppLoader = () => {
   return (
@@ -71,10 +72,14 @@ function App({ children }: { children: ReactNode }) {
   const location = useLocation();
 
   return (
-    <div className="flex">
-      {location.pathname !== "/login" && <Sidebar />}
-      <div className="w-full p-2">{children}</div>
-    </div>
+    <>
+      <div className="flex">
+        {location.pathname !== "/login" && <Sidebar />}
+        <div className="w-full p-2">{children}</div>
+      </div>
+
+      <TorrentDeletionDialog></TorrentDeletionDialog>
+    </>
   );
 }
 

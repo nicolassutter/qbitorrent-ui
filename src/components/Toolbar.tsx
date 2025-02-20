@@ -37,7 +37,6 @@ import { Button } from "@/components/ui/button";
 import { usePreferences } from "@/hooks/usePreferences";
 import { useCategories } from "@/hooks/useCategories";
 import { useSetState } from "react-use";
-import { TorrentDeletionDialog } from "./TorrentDeletionDialog";
 
 type TorrentAdditionData = {
   torrentSource: string | File;
@@ -223,7 +222,7 @@ export const TorrentAdditionDialog: FunctionComponent<{
 export const Toolbar: FunctionComponent<{
   isSelecting: boolean;
   onSelectionModeChange: (isSelectionMode: boolean) => void;
-  onDelete: (deleteFiles: boolean) => void | Promise<void>;
+  onDelete: () => void | Promise<void>;
 }> = (props) => {
   const queryClient = useQueryClient();
 
@@ -248,21 +247,29 @@ export const Toolbar: FunctionComponent<{
     },
   });
 
-  const [deletionDialogOpen, setDeletionDialogOpen] = useState(false);
-
   return (
     <div
       className="toolbar sticky top-0 -mt-(--offset) pt-(--offset) z-50 bg-background/90 backdrop-blur-lg"
       style={{ "--offset": "calc(var(--spacing) * 2)" } as CSSProperties}
     >
-      <div className="flex items-center gap-2 bg-sidebar rounded-sm p-2">
+      <div className="flex items-center gap-2 bg-sidebar rounded-sm p-2 justify-end">
+        {props.isSelecting && (
+          <Button
+            variant="ghost"
+            size={"icon"}
+            title="Delete selected torrents"
+            onClick={() => props.onDelete()}
+          >
+            <LucideTrash aria-hidden="true" />
+          </Button>
+        )}
+
         <Button
           variant="ghost"
           size={"icon"}
           title={
             props.isSelecting ? "Exit selection mode" : "Enter selection mode"
           }
-          className="ml-auto"
           onClick={() => props.onSelectionModeChange(!props.isSelecting)}
         >
           {props.isSelecting ? (
@@ -271,25 +278,6 @@ export const Toolbar: FunctionComponent<{
             <LucideSquare aria-hidden="true" />
           )}
         </Button>
-
-        {props.isSelecting && (
-          <TorrentDeletionDialog
-            isOpen={deletionDialogOpen}
-            onOpenChange={setDeletionDialogOpen}
-            onSubmit={async (deleteFiles) => {
-              await props.onDelete(deleteFiles);
-              setDeletionDialogOpen(false);
-            }}
-          >
-            <Button
-              variant="ghost"
-              size={"icon"}
-              title="Delete selected torrents"
-            >
-              <LucideTrash aria-hidden="true" />
-            </Button>
-          </TorrentDeletionDialog>
-        )}
 
         <TorrentAdditionDialog
           onSubmit={async (data) => {

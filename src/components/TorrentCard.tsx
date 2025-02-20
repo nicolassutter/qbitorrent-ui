@@ -10,7 +10,7 @@ import {
   LucideShapes,
   LucideTrash,
 } from "lucide-react";
-import { FunctionComponent, useState, type ReactNode } from "react";
+import { FunctionComponent, type ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 import { cn, toDecimals } from "@/lib/utils";
 import {
@@ -28,14 +28,13 @@ import {
 } from "@/components/ui/context-menu";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
-  torrentsDeletePost,
   torrentsPausePost,
   torrentsResumePost,
   torrentsSetCategoryPost,
 } from "@/client";
 import { useAppVersion } from "@/hooks/useVersion";
 import { useCategories } from "@/hooks/useCategories";
-import { TorrentDeletionDialog } from "./TorrentDeletionDialog";
+import { useTorrentDeletionDialog } from "@/hooks/useTorrentDeletionDialog";
 
 export type TorrentContextMenuProps = {
   children: ReactNode;
@@ -138,27 +137,9 @@ export const TorrentCard: FunctionComponent<{
 }> = (props) => {
   const torrent = props.torrent;
 
-  const [deletionDialogOpen, setDeletionDialogOpen] = useState(false);
+  const torrentDeletionDialogState = useTorrentDeletionDialog();
   const queryClient = useQueryClient();
   const { isV5orHigher } = useAppVersion();
-
-  const deleteTorrent = useMutation({
-    mutationFn: async (deleteFiles: boolean) => {
-      if (!torrent.hash) return;
-
-      await torrentsDeletePost({
-        body: {
-          hashes: [torrent.hash],
-          deleteFiles: deleteFiles,
-        },
-      });
-    },
-    onSettled: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: ["torrents"],
-      });
-    },
-  });
 
   const startTorrent = useMutation({
     mutationFn: async () => {
@@ -220,7 +201,8 @@ export const TorrentCard: FunctionComponent<{
     <>
       <TorrentContextMenu
         onDelete={() => {
-          setDeletionDialogOpen(true);
+          if (!torrent.hash) return;
+          torrentDeletionDialogState.open([torrent.hash]);
         }}
         onStart={() => {
           startTorrent.mutate();
@@ -331,18 +313,6 @@ export const TorrentCard: FunctionComponent<{
           </CardContent>
         </Card>
       </TorrentContextMenu>
-
-      <TorrentDeletionDialog
-        isOpen={deletionDialogOpen}
-        onOpenChange={setDeletionDialogOpen}
-        onSubmit={(deleteFiles) => {
-          deleteTorrent.mutate(deleteFiles, {
-            onSettled() {
-              setDeletionDialogOpen(false);
-            },
-          });
-        }}
-      ></TorrentDeletionDialog>
     </>
   );
 };

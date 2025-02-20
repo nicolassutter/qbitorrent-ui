@@ -6,32 +6,47 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { FunctionComponent, ReactNode, useId, useState } from "react";
+import { FunctionComponent, useId, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useTorrentDeletionDialog } from "@/hooks/useTorrentDeletionDialog";
+import { useSignalEffect } from "@preact/signals-react";
 
-export const TorrentDeletionDialog: FunctionComponent<{
-  isOpen: boolean;
-  onOpenChange: (isOpen: boolean) => void;
-  onSubmit: (deleteFiles: boolean) => void;
-  children?: ReactNode;
-}> = ({ isOpen, onOpenChange, onSubmit, children }) => {
+export const TorrentDeletionDialog: FunctionComponent = () => {
   const [deleteFiles, setDeleteFiles] = useState(false);
   const id = useId();
   const checkboxId = `deleteFiles-${id}`;
+  const torrentDeletionDialogState = useTorrentDeletionDialog();
+
+  useSignalEffect(() => {
+    // Reset the delete files state when the dialog is closed
+    if (!torrentDeletionDialogState.isOpen) {
+      setDeleteFiles(false);
+    }
+  });
 
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      {children && <DialogTrigger asChild>{children}</DialogTrigger>}
-
+    <Dialog
+      open={torrentDeletionDialogState.isOpen}
+      onOpenChange={(isOpen) => {
+        if (!isOpen) {
+          torrentDeletionDialogState.close();
+        }
+      }}
+    >
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Delete torrent</DialogTitle>
+          <DialogTitle>
+            {/* Delete x torrent(s) */}
+            Delete {torrentDeletionDialogState.hashes.length}{" "}
+            {torrentDeletionDialogState.hashes.length > 1
+              ? "torrents"
+              : "torrent"}
+          </DialogTitle>
           <DialogDescription>
-            Are you sure you want to delete this torrent?
+            Are you sure you want to delete the selected torrent?
           </DialogDescription>
         </DialogHeader>
 
@@ -45,12 +60,12 @@ export const TorrentDeletionDialog: FunctionComponent<{
           />
           <div className="flex flex-col gap-2 leading-none">
             <Label htmlFor={checkboxId} className="block">
-              Delete the torrent&apos;s files ?
+              Delete the torrents files ?
             </Label>
             <p className="text-sm text-muted-foreground">
               This will{" "}
               <span className="font-bold text-foreground">permanently</span>{" "}
-              delete the torrent&apos;s files from your device.
+              delete the torrents files from your device.
             </p>
           </div>
         </div>
@@ -59,7 +74,10 @@ export const TorrentDeletionDialog: FunctionComponent<{
           <DialogClose asChild>
             <Button variant="ghost">Cancel</Button>
           </DialogClose>
-          <Button variant="destructive" onClick={() => onSubmit(deleteFiles)}>
+          <Button
+            variant="destructive"
+            onClick={() => torrentDeletionDialogState.submit(deleteFiles)}
+          >
             Delete
           </Button>
         </DialogFooter>

@@ -20,6 +20,7 @@ import { z } from "zod";
 import { CustomPagination } from "@/components/CustomPagination";
 import { Toolbar } from "@/components/Toolbar";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useTorrentDeletionDialog } from "@/hooks/useTorrentDeletionDialog";
 
 const pageName = "p";
 const SearchSchema = z.object({
@@ -110,45 +111,21 @@ export default function HomeComponent() {
     }
   }, [isSelecting]);
 
-  const deleteTorrents = useMutation({
-    mutationFn: async ({
-      deleteFiles,
-      hashes,
-    }: {
-      hashes: string[];
-      deleteFiles: boolean;
-    }) => {
-      await torrentsDeletePost({
-        body: {
-          // @ts-expect-error hashes should be a string
-          hashes: hashes.join("|"),
-          deleteFiles,
-        },
-      });
-    },
-    onSettled: async () => {
-      await torrents.refetch();
-    },
-  });
+  const torrentDeletionDialogState = useTorrentDeletionDialog();
 
   return (
     <main className="">
       <Toolbar
         isSelecting={isSelecting}
         onSelectionModeChange={setIsSelecting}
-        onDelete={(deleteFiles) => {
+        onDelete={() => {
           if (selectedTorrents.length === 0) return;
 
-          try {
-            return deleteTorrents.mutateAsync({
-              deleteFiles,
-              hashes: selectedTorrents,
-            });
-            // eslint-disable-next-line no-empty
-          } catch (_error) {
-          } finally {
+          // if the form is submitted, exit selection mode
+          torrentDeletionDialogState.onNextSubmit(() => {
             setIsSelecting(false);
-          }
+          });
+          torrentDeletionDialogState.open(selectedTorrents);
         }}
       />
 
