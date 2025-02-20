@@ -1,11 +1,9 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { TorrentInfo } from "@/client/types.gen";
-import { Badge } from "./ui/badge";
 import bytes from "bytes";
 import { Progress } from "./ui/progress";
 import {
   ChevronDown,
-  LucideLoaderCircle,
   LucidePause,
   LucidePlay,
   LucideShapes,
@@ -13,7 +11,7 @@ import {
 } from "lucide-react";
 import { FunctionComponent, useState, type ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
-import { cn, toDecimals } from "@/lib/utils";
+import { toDecimals } from "@/lib/utils";
 import {
   ContextMenu,
   ContextMenuContent,
@@ -42,6 +40,7 @@ import {
   CollapsibleTrigger,
 } from "./ui/collapsible";
 import { Button } from "./ui/button";
+import { TorrentBadge } from "./TorrentBadge";
 
 export type TorrentContextMenuProps = {
   children: ReactNode;
@@ -264,26 +263,7 @@ export const TorrentCard: FunctionComponent<{
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-sm font-medium flex items-center gap-2">
                     Progress
-                    <Badge
-                      className={cn({
-                        "bg-indigo-600 dark:bg-indigo-400":
-                          torrent.state === "uploading",
-                        "bg-red-600 dark:bg-red-300": torrent.state === "error",
-                        "bg-blue-600 dark:bg-blue-400":
-                          torrent.state === "stalledUP",
-                        "bg-orange-600 dark:bg-orange-300":
-                          torrent.state === "moving",
-                        "bg-green-600 dark:bg-green-300":
-                          torrent.state === "downloading",
-                      })}
-                    >
-                      {torrent.state}
-                      {(torrent.state === "uploading" ||
-                        torrent.state === "downloading" ||
-                        torrent.state === "moving") && (
-                        <LucideLoaderCircle className="w-4 h-4 ml-1 animate-spin" />
-                      )}
-                    </Badge>
+                    <TorrentBadge state={torrent.state} />
                   </span>
 
                   <span className="text-sm">

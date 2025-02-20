@@ -25,15 +25,15 @@ import {
   ChevronLeft,
 } from "lucide-react";
 
-import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { queryOptions, useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import bytes from "bytes";
 import { priorityMap, TorrentFilesTree } from "@/components/TorrentFilesTree";
 import { ComponentProps, useMemo, useState } from "react";
 import { TorrentsFilePrioPostData } from "@/client";
+import { TorrentBadge } from "@/components/TorrentBadge";
 
 const formatDate = (timestamp: number) => {
   return new Date(timestamp * 1000).toLocaleString();
@@ -63,22 +63,6 @@ export default function Torrent() {
   const params = Route.useParams();
   const torrentHash = params.torrentHash;
 
-  const torrentOptions = queryOptions({
-    get queryKey() {
-      return ["torrent", torrentHash];
-    },
-    queryFn: async () => {
-      const response = await torrentsInfoPost({
-        body: {
-          hashes: [torrentHash],
-        },
-      });
-
-      return response.data?.[0] ?? null;
-    },
-    refetchInterval: 2000,
-  });
-
   const files = useQuery({
     queryKey: ["files", torrentHash],
     queryFn: async () => {
@@ -93,7 +77,19 @@ export default function Torrent() {
     refetchInterval: 2000,
   });
 
-  const torrent = useQuery(torrentOptions);
+  const torrent = useQuery({
+    queryKey: ["torrent", torrentHash],
+    queryFn: async () => {
+      const response = await torrentsInfoPost({
+        body: {
+          hashes: [torrentHash],
+        },
+      });
+
+      return response.data?.[0] ?? null;
+    },
+    refetchInterval: 2000,
+  });
 
   const [allFilesPriority, setAllFilesPriority] =
     useState<keyof typeof priorityMap>(0);
@@ -187,15 +183,7 @@ export default function Torrent() {
                   <Tag className="inline mr-2" /> Category:{" "}
                   {torrent.data?.category}
                 </p>
-                <Badge
-                  variant={
-                    torrent.data?.state === "uploading"
-                      ? "default"
-                      : "secondary"
-                  }
-                >
-                  {torrent.data?.state}
-                </Badge>
+                <TorrentBadge state={torrent.data?.state}></TorrentBadge>
               </div>
             </CardContent>
           </Card>
@@ -219,7 +207,7 @@ export default function Torrent() {
                 {torrent.data?.ratio !== undefined && (
                   <p>
                     <Zap className="inline mr-2" /> Ratio:{" "}
-                    {torrent.data?.ratio?.toFixed(3)}
+                    {torrent.data?.ratio?.toFixed(2)}
                   </p>
                 )}
                 <p>
@@ -293,21 +281,21 @@ export default function Torrent() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Tracker</CardTitle>
+              <CardTitle>Miscellaneous</CardTitle>
             </CardHeader>
-            <CardContent>
-              <p className="break-all">{torrent.data?.tracker}</p>
-            </CardContent>
-          </Card>
+            <CardContent className="grid gap-4">
+              <div>
+                <p className="font-medium">Tracker</p>
+                <p className="break-all">{torrent.data?.tracker}</p>
+              </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Hash</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="break-all">
-                <Hash className="inline mr-2" /> {torrent.data?.hash}
-              </p>
+              <div>
+                <p className="font-medium">Hash</p>
+                <p className="break-all">
+                  <Hash className="inline mr-2" />
+                  {torrent.data?.hash}
+                </p>
+              </div>
             </CardContent>
           </Card>
 
