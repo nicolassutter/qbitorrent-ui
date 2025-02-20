@@ -72,7 +72,7 @@ export const TorrentDeletionDialog: FunctionComponent = () => {
 
         <DialogFooter>
           <DialogClose asChild>
-            <Button variant="ghost">Cancel</Button>
+            <Button variant="secondary">Cancel</Button>
           </DialogClose>
           <Button
             variant="destructive"

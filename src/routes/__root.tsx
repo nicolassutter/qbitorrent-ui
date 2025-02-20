@@ -16,6 +16,7 @@ import { preferencesOptions } from "@/hooks/usePreferences";
 import { appVersionOptions } from "@/hooks/useVersion";
 import { TorrentDeletionDialog } from "@/components/TorrentDeletionDialog";
 import "@fontsource-variable/geist/wght.css";
+import { TorrentRenameDialog } from "@/components/TorrentRenameDialog";
 
 const AppLoader = () => {
   return (
@@ -80,6 +81,7 @@ function App({ children }: { children: ReactNode }) {
       </div>
 
       <TorrentDeletionDialog></TorrentDeletionDialog>
+      <TorrentRenameDialog></TorrentRenameDialog>
     </>
   );
 }

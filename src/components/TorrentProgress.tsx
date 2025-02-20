@@ -2,12 +2,13 @@ import { TorrentInfo } from "@/client";
 import { type FunctionComponent } from "react";
 import { TorrentBadge } from "./TorrentBadge";
 import { Progress } from "./ui/progress";
-import { formatDuration, formatSize } from "@/lib/utils";
+import { formatDuration, formatSize, toDecimals } from "@/lib/utils";
 
 export const TorrentProgress: FunctionComponent<{
   torrent: TorrentInfo;
 }> = ({ torrent }) => {
-  const percentage = (torrent.progress ?? 0) * 100;
+  const percentage = toDecimals((torrent.progress ?? 0) * 100, 2);
+  const showEta = torrent.eta !== 8640000;
 
   return (
     <div>
@@ -19,7 +20,7 @@ export const TorrentProgress: FunctionComponent<{
 
         <span className="text-sm">
           {formatSize(torrent.size ?? 0)}
-          {percentage < 100 && <>(ETA: {formatDuration(torrent.eta ?? 0)})</>}
+          {showEta && <>(ETA: {formatDuration(torrent.eta ?? 0)})</>}
         </span>
       </div>
 

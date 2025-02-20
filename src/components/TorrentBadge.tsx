@@ -3,8 +3,9 @@ import { Badge } from "./ui/badge";
 import { type FunctionComponent } from "react";
 import { LucideLoaderCircle } from "lucide-react";
 import { TorrentInfo } from "@/client";
+import { LiteralUnion } from "type-fest";
 
-const torrentStatusMap: Record<NonNullable<TorrentInfo["state"]>, string> = {
+const torrentStatusMap = {
   uploading: "Uploading",
   allocating: "Allocating",
   checkingDL: "Checking DL",
@@ -16,15 +17,22 @@ const torrentStatusMap: Record<NonNullable<TorrentInfo["state"]>, string> = {
   forcedUP: "Forced UP",
   metaDL: "Meta DL",
   moving: "Moving",
-  pausedDL: "Paused DL",
-  pausedUP: "Paused UP",
   queuedDL: "Queued DL",
   queuedUP: "Queued UP",
   stalledDL: "Stalled DL",
   stalledUP: "Stalled UP",
   missingFiles: "Missing Files",
+  // pause === stop in qBitTorrent v5
+  pausedDL: "Paused DL",
+  stoppedDL: "Stopped DL",
+  pausedUP: "Paused UP",
+  stoppedUP: "Stopped UP",
+  // default
   unknown: "Unknown",
-};
+} satisfies Record<
+  LiteralUnion<NonNullable<TorrentInfo["state"]>, string>,
+  string
+>;
 
 function getStatusText(state: TorrentInfo["state"]) {
   return state ? (torrentStatusMap[state] ?? state) : torrentStatusMap.unknown;

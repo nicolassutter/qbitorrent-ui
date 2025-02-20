@@ -12,8 +12,8 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { createContext, memo, useContext } from "react";
 import { sep, join } from "path-browserify";
-import bytes from "bytes";
 import { TorrentsFiles as TorrentFile } from "@/client/types.gen";
+import { formatSize, toDecimals } from "@/lib/utils";
 
 interface FileInfo {
   status: "downloading" | "seeding" | "paused" | "queued";
@@ -84,12 +84,6 @@ function buildTree(
 
   return tree;
 }
-
-const formatSize = (b: number) => {
-  return bytes(b, {
-    unitSeparator: " ",
-  });
-};
 
 type HandlePriorityChange = (
   priority: keyof typeof priorityMap,
@@ -232,7 +226,7 @@ const TreeNode = (props: TreeView.NodeProviderProps<Node>) => {
                       className="w-full"
                     />
                     <span className="text-xs whitespace-nowrap">
-                      {node.fileInfo.progress.toFixed(1)}%
+                      {toDecimals(node.fileInfo.progress, 2)}%
                     </span>
                   </div>
                   <span className="text-xs text-muted-foreground whitespace-nowrap">

@@ -3,6 +3,7 @@ import type { TorrentInfo } from "@/client/types.gen";
 import {
   ChevronDown,
   LucidePause,
+  LucidePencilLine,
   LucidePlay,
   LucideShapes,
   LucideTrash,
@@ -39,14 +40,16 @@ import {
 } from "./ui/collapsible";
 import { Button } from "./ui/button";
 import { TorrentProgress } from "./TorrentProgress";
+import { useTorrentRenameDialog } from "@/hooks/useTorrentRenameDialog";
 
 export type TorrentContextMenuProps = {
   children: ReactNode;
   className?: string;
-  onDelete?: () => void;
-  onPause?: () => void;
-  onStart?: () => void;
-  onSetCategory?: (category: string) => void;
+  onDelete: () => void;
+  onPause: () => void;
+  onStart: () => void;
+  onRename: () => void;
+  onSetCategory: (category: string) => void;
   /** The category of the torrent */
   category?: string;
 };
@@ -56,6 +59,7 @@ const TorrentContextMenu = ({
   onPause,
   onStart,
   onSetCategory,
+  onRename,
   category,
   className,
 }: TorrentContextMenuProps) => {
@@ -117,10 +121,19 @@ const TorrentContextMenu = ({
                 </ContextMenuRadioGroup>
               </ContextMenuSubContent>
             </ContextMenuSub>
-
-            <ContextMenuSeparator />
           </>
         )}
+
+        <ContextMenuItem
+          onSelect={() => {
+            onRename?.();
+          }}
+        >
+          <LucidePencilLine className="text-popover-foreground" />
+          Rename
+        </ContextMenuItem>
+
+        <ContextMenuSeparator />
 
         <ContextMenuItem
           onSelect={() => {
@@ -142,9 +155,11 @@ export const TorrentCard: FunctionComponent<{
   const torrent = props.torrent;
 
   const [isExpanded, setIsExpanded] = useState(false);
-  const torrentDeletionDialogState = useTorrentDeletionDialog();
   const queryClient = useQueryClient();
   const { isV5orHigher } = useAppVersion();
+
+  const torrentDeletionDialogState = useTorrentDeletionDialog();
+  const torrentRenameDialogState = useTorrentRenameDialog();
 
   const startTorrent = useMutation({
     mutationFn: async () => {
@@ -206,6 +221,10 @@ export const TorrentCard: FunctionComponent<{
         onDelete={() => {
           if (!torrent.hash) return;
           torrentDeletionDialogState.open([torrent.hash]);
+        }}
+        onRename={() => {
+          if (!torrent.hash) return;
+          torrentRenameDialogState.open(torrent.hash ?? "", torrent.name);
         }}
         onStart={() => {
           startTorrent.mutate();
