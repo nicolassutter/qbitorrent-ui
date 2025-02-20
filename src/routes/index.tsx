@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useSearch } from "@tanstack/react-router";
 import { torrentsInfoPost } from "@/client/sdk.gen";
 import { useQuery } from "@tanstack/react-query";
 import { TorrentCard } from "@/components/TorrentCard";
@@ -34,7 +34,8 @@ export const Route = createFileRoute("/")({
 
 export default function HomeComponent() {
   const defaultSort: keyof TorrentInfo = "added_on";
-  const [page, setPage] = createQueryParam(pageName, 1);
+  const search = useSearch({ strict: false });
+  const [page, setPage] = createQueryParam(search, "p", 1);
 
   const [sort, setSort] = useLocalStorage<keyof TorrentInfo>(
     "qbitorrent-ui-sort",
@@ -81,8 +82,8 @@ export default function HomeComponent() {
 
   const currentPageTorrents = useMemo(() => {
     return filteredTorrents.slice(
-      (page() - 1) * (perPage ?? perPageDefault),
-      page() * (perPage ?? perPageDefault),
+      (page - 1) * (perPage ?? perPageDefault),
+      page * (perPage ?? perPageDefault),
     );
   }, [filteredTorrents, page, perPage]);
 
@@ -95,10 +96,10 @@ export default function HomeComponent() {
 
   // If the page is greater than the page count, set the page to the last page
   useEffect(() => {
-    if (page() > pageCount) {
+    if (page > pageCount) {
       setPage(pageCount);
     }
-  }, [pageCount, page()]);
+  }, [pageCount, page]);
 
   const id = useId();
 
@@ -264,7 +265,7 @@ export default function HomeComponent() {
       {pageCount > 1 && (
         <div className="mt-4">
           <CustomPagination
-            page={page()}
+            page={page}
             count={filteredTorrents.length}
             pageSize={perPage ?? perPageDefault}
             searchParam={pageName}

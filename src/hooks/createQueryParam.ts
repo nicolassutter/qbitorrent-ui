@@ -1,38 +1,19 @@
-import { useNavigate, useSearch } from "@tanstack/react-router";
-import { type JsonPrimitive, LiteralToPrimitive } from "type-fest";
+import { useNavigate } from "@tanstack/react-router";
+import { type JsonPrimitive } from "type-fest";
 
 export function createQueryParam<
-  T extends JsonPrimitive,
-  Primitive extends LiteralToPrimitive<T> = LiteralToPrimitive<T>,
->(
-  key: string,
-): readonly [
-  () => Primitive | undefined,
-  (value: Primitive | null | undefined) => void,
-];
+  Search extends Record<string, JsonPrimitive>,
+  Key extends keyof Search,
+  Default extends Search[Key],
+>(search: Search, key: keyof Search, defaultValue: Default) {
+  const navigate = useNavigate();
 
-export function createQueryParam<
-  T extends JsonPrimitive,
-  Primitive extends LiteralToPrimitive<T> = LiteralToPrimitive<T>,
->(
-  key: string,
-  defaultValue: T,
-): readonly [() => Primitive, (value: Primitive | null | undefined) => void];
+  const get = search[key] || defaultValue;
 
-export function createQueryParam<
-  T extends JsonPrimitive,
-  Primitive extends LiteralToPrimitive<T> = LiteralToPrimitive<T>,
->(key: string, defaultValue?: T) {
-  const search = useSearch({
-    strict: false,
-  });
-  const navigate = useNavigate({});
-
-  const get = () => (search[key] as Primitive) || (defaultValue as Primitive);
-
-  const set = (value: Primitive) => {
+  const set = (value: Search[keyof Search]) => {
     navigate({
-      search: () => ({ [key]: value }),
+      // @ts-expect-error the type is complex and not worth the effort
+      search: { [key]: value },
     });
   };
 
